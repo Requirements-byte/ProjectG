@@ -1,1381 +1,2005 @@
 /* =========================================================
-   ARCHITECTURAL PROJECT FILE VIEWER
-   INDEXEDDB STORAGE VERSION
+   ARCHGEN PROJECT FILE PORTAL
+   PROJECT ID BASED INDEXEDDB SYSTEM
    ========================================================= */
 
-const DB_NAME = "ArchitecturalProjectDB";
-const DB_VERSION = 1;
-const STORE_NAME = "files";
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-let db = null;
-let files = [];
-let currentFilter = "all";
-let viewerIndex = 0;
+        /* =================================================
+           DATABASE
+           ================================================= */
 
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
+        const DB_NAME =
+            "ArchitecturalProjectDB";
 
-const fileInput = document.getElementById("fileInput");
-const fileGrid = document.getElementById("fileGrid");
-const emptyState = document.getElementById("emptyState");
-const fileCount = document.getElementById("fileCount");
-const projectIdInput = document.getElementById("projectId");
-const clearAll = document.getElementById("clearAll");
+        const DB_VERSION = 1;
 
-const viewer = document.getElementById("viewer");
-const viewerStage = document.getElementById("viewerStage");
-const viewerTitle = document.getElementById("viewerTitle");
-const viewerCategory = document.getElementById("viewerCategory");
-const viewerInfo = document.getElementById("viewerInfo");
-const viewerPosition = document.getElementById("viewerPosition");
-const closeViewer = document.getElementById("closeViewer");
-const prevFile = document.getElementById("prevFile");
-const nextFile = document.getElementById("nextFile");
-const downloadFile = document.getElementById("downloadFile");
+        const STORE_NAME =
+            "files";
 
 
-/* =========================================================
-   PROJECT ID
-   ========================================================= */
+        let db = null;
 
-projectIdInput.value =
-    localStorage.getItem("architecturalProjectId") || "";
+        let files = [];
 
-projectIdInput.addEventListener("input", () => {
+        let currentFilter = "all";
 
-    localStorage.setItem(
-        "architecturalProjectId",
-        projectIdInput.value.trim()
-    );
+        let viewerIndex = 0;
 
-});
+        let viewerFiles = [];
 
 
-/* =========================================================
-   INDEXEDDB
-   ========================================================= */
+        /* =================================================
+           DOM
+           ================================================= */
 
-function openDatabase() {
-
-    return new Promise((resolve, reject) => {
-
-        const request = indexedDB.open(
-            DB_NAME,
-            DB_VERSION
-        );
-
-        request.onupgradeneeded = function(event) {
-
-            const database = event.target.result;
-
-            if (!database.objectStoreNames.contains(STORE_NAME)) {
-
-                const store = database.createObjectStore(
-                    STORE_NAME,
-                    {
-                        keyPath: "id",
-                        autoIncrement: true
-                    }
-                );
-
-                store.createIndex(
-                    "projectId",
-                    "projectId",
-                    {
-                        unique: false
-                    }
-                );
-
-                store.createIndex(
-                    "category",
-                    "category",
-                    {
-                        unique: false
-                    }
-                );
-
-            }
-
-        };
-
-
-        request.onsuccess = function(event) {
-
-            db = event.target.result;
-
-            console.log(
-                "IndexedDB connected successfully."
+        const fileInput =
+            document.getElementById(
+                "fileInput"
             );
 
-            resolve(db);
-
-        };
-
-
-        request.onerror = function(event) {
-
-            console.error(
-                "IndexedDB error:",
-                event.target.error
+        const fileGrid =
+            document.getElementById(
+                "fileGrid"
             );
 
-            reject(event.target.error);
-
-        };
-
-    });
-
-}
-
-
-/* =========================================================
-   ADD FILE TO DATABASE
-   ========================================================= */
-
-function addFileToDatabase(fileData) {
-
-    return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            [STORE_NAME],
-            "readwrite"
-        );
-
-        const store =
-            transaction.objectStore(STORE_NAME);
-
-        const request =
-            store.add(fileData);
-
-
-        request.onsuccess = function(event) {
-
-            resolve(event.target.result);
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(event.target.error);
-
-        };
-
-    });
-
-}
-
-
-/* =========================================================
-   GET ALL FILES
-   ========================================================= */
-
-function getAllFilesFromDatabase() {
-
-    return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            [STORE_NAME],
-            "readonly"
-        );
-
-        const store =
-            transaction.objectStore(STORE_NAME);
-
-        const request =
-            store.getAll();
-
-
-        request.onsuccess = function() {
-
-            resolve(request.result);
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(event.target.error);
-
-        };
-
-    });
-
-}
-
-
-/* =========================================================
-   DELETE FILE
-   ========================================================= */
-
-function deleteFileFromDatabase(id) {
-
-    return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            [STORE_NAME],
-            "readwrite"
-        );
-
-        const store =
-            transaction.objectStore(STORE_NAME);
-
-        const request =
-            store.delete(id);
-
-
-        request.onsuccess = function() {
-
-            resolve();
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(event.target.error);
-
-        };
-
-    });
-
-}
-
-
-/* =========================================================
-   CLEAR DATABASE
-   ========================================================= */
-
-function clearDatabase() {
-
-    return new Promise((resolve, reject) => {
-
-        const transaction = db.transaction(
-            [STORE_NAME],
-            "readwrite"
-        );
-
-        const store =
-            transaction.objectStore(STORE_NAME);
-
-        const request =
-            store.clear();
-
-
-        request.onsuccess = function() {
-
-            resolve();
-
-        };
-
-
-        request.onerror = function(event) {
-
-            reject(event.target.error);
-
-        };
-
-    });
-
-}
-
-
-/* =========================================================
-   FORMAT FILE SIZE
-   ========================================================= */
-
-function formatSize(bytes) {
-
-    if (bytes < 1024) {
-
-        return bytes + " B";
-
-    }
-
-    if (bytes < 1024 * 1024) {
-
-        return (
-            (bytes / 1024).toFixed(1) +
-            " KB"
-        );
-
-    }
-
-    if (bytes < 1024 * 1024 * 1024) {
-
-        return (
-            (bytes / (1024 * 1024)).toFixed(1) +
-            " MB"
-        );
-
-    }
-
-    return (
-        (bytes / (1024 * 1024 * 1024)).toFixed(2) +
-        " GB"
-    );
-
-}
-
-
-/* =========================================================
-   CATEGORY
-   ========================================================= */
-
-function getCategory(file) {
-
-    const name =
-        file.name.toLowerCase();
-
-
-    if (
-        /floor|plan|layout|blueprint/.test(name)
-    ) {
-
-        return "floor-plan";
-
-    }
-
-
-    if (
-        /sketch|concept|drawing/.test(name)
-    ) {
-
-        return "sketch";
-
-    }
-
-
-    if (
-        /render|perspective|visualization|3d/.test(name)
-    ) {
-
-        return "rendered";
-
-    }
-
-
-    if (
-        /presentation|present|slide|ppt/.test(name)
-    ) {
-
-        return "presentation";
-
-    }
-
-
-    return "document";
-
-}
-
-
-/* =========================================================
-   CATEGORY LABEL
-   ========================================================= */
-
-function categoryLabel(category) {
-
-    const labels = {
-
-        "floor-plan":
-            "FLOOR PLAN",
-
-        "sketch":
-            "SKETCH",
-
-        "rendered":
-            "RENDERED PERSPECTIVE",
-
-        "presentation":
-            "PRESENTATION",
-
-        "document":
-            "DOCUMENT"
-
-    };
-
-
-    return labels[category] ||
-        "DOCUMENT";
-
-}
-
-
-/* =========================================================
-   FILE EXTENSION
-   ========================================================= */
-
-function extension(name) {
-
-    return name
-        .split(".")
-        .pop()
-        .toUpperCase();
-
-}
-
-
-/* =========================================================
-   IMAGE
-   ========================================================= */
-
-function isImage(file) {
-
-    return (
-        file.type &&
-        file.type.startsWith("image/")
-    );
-
-}
-
-
-/* =========================================================
-   PDF
-   ========================================================= */
-
-function isPDF(file) {
-
-    return (
-        file.type === "application/pdf" ||
-        file.name
-            .toLowerCase()
-            .endsWith(".pdf")
-    );
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value || "")
-
-        .replaceAll("&", "&amp;")
-
-        .replaceAll("<", "&lt;")
-
-        .replaceAll(">", "&gt;")
-
-        .replaceAll('"', "&quot;")
-
-        .replaceAll("'", "&#039;");
-
-}
-
-
-/* =========================================================
-   RENDER FILES
-   ========================================================= */
-
-function renderFiles() {
-
-    fileGrid.innerHTML = "";
-
-
-    const filtered =
-        currentFilter === "all"
-
-            ? files
-
-            : files.filter(
-                file =>
-                    file.category ===
-                    currentFilter
+        const emptyState =
+            document.getElementById(
+                "emptyState"
+            );
+
+        const fileCount =
+            document.getElementById(
+                "fileCount"
+            );
+
+        const projectIdInput =
+            document.getElementById(
+                "projectId"
+            );
+
+        const clearAllButton =
+            document.getElementById(
+                "clearAll"
             );
 
 
-    emptyState.style.display =
-        filtered.length
-            ? "none"
-            : "block";
+        const viewer =
+            document.getElementById(
+                "viewer"
+            );
+
+        const viewerStage =
+            document.getElementById(
+                "viewerStage"
+            );
+
+        const viewerTitle =
+            document.getElementById(
+                "viewerTitle"
+            );
+
+        const viewerCategory =
+            document.getElementById(
+                "viewerCategory"
+            );
+
+        const viewerInfo =
+            document.getElementById(
+                "viewerInfo"
+            );
+
+        const viewerPosition =
+            document.getElementById(
+                "viewerPosition"
+            );
+
+        const closeViewer =
+            document.getElementById(
+                "closeViewer"
+            );
+
+        const prevFile =
+            document.getElementById(
+                "prevFile"
+            );
+
+        const nextFile =
+            document.getElementById(
+                "nextFile"
+            );
+
+        const downloadFile =
+            document.getElementById(
+                "downloadFile"
+            );
 
 
-    fileCount.textContent =
-        `${files.length} file${
-            files.length === 1
-                ? ""
-                : "s"
-        }`;
+        /* =================================================
+           PROJECT ID
+           ================================================= */
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
 
 
-    filtered.forEach(file => {
-
-        const card =
-            document.createElement("article");
-
-        card.className =
-            "file-card";
-
-
-        let preview = `
-            <div class="file-type">
-                ${extension(file.name)}
-            </div>
-        `;
-
-
-        if (isImage(file)) {
-
-            const imageURL =
-                URL.createObjectURL(
-                    file.file
-                );
-
-
-            preview = `
-                <img
-                    src="${imageURL}"
-                    alt="${escapeHTML(file.name)}"
-                >
-            `;
-
-        }
-
-
-        else if (isPDF(file)) {
-
-            preview = `
-                <div class="file-type">
-                    PDF
-                </div>
-            `;
-
-        }
-
-
-        card.innerHTML = `
-
-            <div
-                class="preview"
-                data-id="${file.id}"
-            >
-                ${preview}
-            </div>
-
-
-            <div class="file-card-body">
-
-                <span class="file-category">
-                    ${categoryLabel(file.category)}
-                </span>
-
-
-                <h3 class="file-name">
-                    ${escapeHTML(file.name)}
-                </h3>
-
-
-                <div class="file-meta">
-
-                    ${formatSize(file.size)}
-                    ·
-                    ${escapeHTML(
-                        file.projectId ||
-                        "No Project ID"
-                    )}
-
-                </div>
-
-
-                <div class="card-actions">
-
-                    <button
-                        type="button"
-                        data-view="${file.id}"
-                    >
-                        VIEW
-                    </button>
-
-
-                    <button
-                        type="button"
-                        data-delete="${file.id}"
-                    >
-                        DELETE
-                    </button>
-
-                </div>
-
-            </div>
-
-        `;
-
-
-        fileGrid.appendChild(card);
-
-    });
-
-}
-
-
-/* =========================================================
-   LOAD FILES
-   ========================================================= */
-
-async function loadFiles() {
-
-    try {
-
-        files =
-            await getAllFilesFromDatabase();
-
-        renderFiles();
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not load project files."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   ADD FILES
-   ========================================================= */
-
-fileInput.addEventListener(
-    "change",
-    async event => {
-
-        const selected =
-            [...event.target.files];
-
-
-        if (!selected.length) {
-            return;
-        }
-
-
-        const projectId =
-            projectIdInput.value.trim();
+        let projectId =
+            params.get("projectId");
 
 
         if (!projectId) {
 
-            alert(
-                "Please enter a Project ID first."
-            );
-
-            fileInput.value = "";
-
-            return;
+            projectId =
+                localStorage.getItem(
+                    "architecturalProjectId"
+                );
 
         }
 
 
-        const allowed = [
+        if (projectId) {
 
-            "image/jpeg",
+            projectId =
+                projectId.trim();
 
-            "image/png",
+            projectIdInput.value =
+                projectId;
 
-            "image/webp",
+            localStorage.setItem(
+                "architecturalProjectId",
+                projectId
+            );
 
-            "image/gif",
-
-            "application/pdf",
-
-            "application/vnd.ms-powerpoint",
-
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-
-            "application/msword",
-
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-        ];
+        }
 
 
-        const extensionAllowed =
-            /\.(jpg|jpeg|png|webp|gif|pdf|ppt|pptx|doc|docx)$/i;
+        projectIdInput.addEventListener(
+            "change",
+            function () {
+
+                const value =
+                    projectIdInput.value.trim();
 
 
-        let addedCount = 0;
+                if (!value) {
+
+                    alert(
+                        "Please enter a valid Project ID."
+                    );
+
+                    return;
+                }
 
 
-        for (const file of selected) {
+                projectId = value;
 
-            if (
-                !allowed.includes(file.type) &&
-                !extensionAllowed.test(file.name)
-            ) {
 
-                alert(
-                    `${file.name} is not a supported file.`
+                localStorage.setItem(
+                    "architecturalProjectId",
+                    projectId
                 );
 
-                continue;
+
+                loadFiles();
+
+            }
+        );
+
+
+        /* =================================================
+           DATABASE OPEN
+           ================================================= */
+
+        function openDatabase() {
+
+            return new Promise(
+                function (resolve, reject) {
+
+                    const request =
+                        indexedDB.open(
+                            DB_NAME,
+                            DB_VERSION
+                        );
+
+
+                    request.onupgradeneeded =
+                        function (event) {
+
+                            const database =
+                                event.target.result;
+
+
+                            if (
+                                !database.objectStoreNames
+                                    .contains(
+                                        STORE_NAME
+                                    )
+                            ) {
+
+                                const store =
+                                    database.createObjectStore(
+                                        STORE_NAME,
+                                        {
+                                            keyPath:
+                                                "id",
+                                            autoIncrement:
+                                                true
+                                        }
+                                    );
+
+
+                                store.createIndex(
+                                    "projectId",
+                                    "projectId",
+                                    {
+                                        unique: false
+                                    }
+                                );
+
+
+                                store.createIndex(
+                                    "category",
+                                    "category",
+                                    {
+                                        unique: false
+                                    }
+                                );
+
+                            }
+
+                        };
+
+
+                    request.onsuccess =
+                        function () {
+
+                            db =
+                                request.result;
+
+                            resolve(db);
+
+                        };
+
+
+                    request.onerror =
+                        function () {
+
+                            reject(
+                                request.error
+                            );
+
+                        };
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           ADD FILE
+           ================================================= */
+
+        function addFileToDatabase(
+            fileData
+        ) {
+
+            return new Promise(
+                function (resolve, reject) {
+
+                    const transaction =
+                        db.transaction(
+                            STORE_NAME,
+                            "readwrite"
+                        );
+
+
+                    const store =
+                        transaction.objectStore(
+                            STORE_NAME
+                        );
+
+
+                    const request =
+                        store.add(
+                            fileData
+                        );
+
+
+                    request.onsuccess =
+                        function () {
+
+                            resolve(
+                                request.result
+                            );
+
+                        };
+
+
+                    request.onerror =
+                        function () {
+
+                            reject(
+                                request.error
+                            );
+
+                        };
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           GET ALL FILES
+           ================================================= */
+
+        function getAllFilesFromDatabase() {
+
+            return new Promise(
+                function (resolve, reject) {
+
+                    const transaction =
+                        db.transaction(
+                            STORE_NAME,
+                            "readonly"
+                        );
+
+
+                    const store =
+                        transaction.objectStore(
+                            STORE_NAME
+                        );
+
+
+                    const request =
+                        store.getAll();
+
+
+                    request.onsuccess =
+                        function () {
+
+                            resolve(
+                                request.result || []
+                            );
+
+                        };
+
+
+                    request.onerror =
+                        function () {
+
+                            reject(
+                                request.error
+                            );
+
+                        };
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           DELETE
+           ================================================= */
+
+        function deleteFileFromDatabase(
+            id
+        ) {
+
+            return new Promise(
+                function (resolve, reject) {
+
+                    const transaction =
+                        db.transaction(
+                            STORE_NAME,
+                            "readwrite"
+                        );
+
+
+                    const store =
+                        transaction.objectStore(
+                            STORE_NAME
+                        );
+
+
+                    const request =
+                        store.delete(
+                            Number(id)
+                        );
+
+
+                    request.onsuccess =
+                        function () {
+                            resolve();
+                        };
+
+
+                    request.onerror =
+                        function () {
+
+                            reject(
+                                request.error
+                            );
+
+                        };
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           CLEAR CURRENT PROJECT ONLY
+           ================================================= */
+
+        async function clearCurrentProject() {
+
+            const allFiles =
+                await getAllFilesFromDatabase();
+
+
+            const projectFiles =
+                allFiles.filter(
+                    function (file) {
+
+                        return sameProject(
+                            file.projectId,
+                            projectId
+                        );
+
+                    }
+                );
+
+
+            for (
+                const file
+                of projectFiles
+            ) {
+
+                await deleteFileFromDatabase(
+                    file.id
+                );
+
+            }
+
+        }
+
+
+        /* =================================================
+           PROJECT COMPARISON
+           ================================================= */
+
+        function sameProject(
+            first,
+            second
+        ) {
+
+            return (
+                String(first || "")
+                    .trim()
+                    .toLowerCase()
+                ===
+                String(second || "")
+                    .trim()
+                    .toLowerCase()
+            );
+
+        }
+
+
+        /* =================================================
+           FORMAT SIZE
+           ================================================= */
+
+        function formatSize(
+            bytes
+        ) {
+
+            if (!bytes) {
+                return "0 B";
+            }
+
+
+            const units =
+                [
+                    "B",
+                    "KB",
+                    "MB",
+                    "GB"
+                ];
+
+
+            let size =
+                bytes;
+
+            let index = 0;
+
+
+            while (
+                size >= 1024 &&
+                index <
+                    units.length - 1
+            ) {
+
+                size /= 1024;
+                index++;
+
+            }
+
+
+            return (
+                size.toFixed(
+                    index === 0 ? 0 : 2
+                ) +
+                " " +
+                units[index]
+            );
+
+        }
+
+
+        /* =================================================
+           CATEGORY
+           ================================================= */
+
+        function getCategory(
+            file
+        ) {
+
+            const name =
+                file.name.toLowerCase();
+
+
+            if (
+                /floor|plan|layout|blueprint/
+                    .test(name)
+            ) {
+                return "floor-plan";
+            }
+
+
+            if (
+                /sketch|concept|drawing/
+                    .test(name)
+            ) {
+                return "sketch";
+            }
+
+
+            if (
+                /render|perspective|visualization|3d/
+                    .test(name)
+            ) {
+                return "rendered";
+            }
+
+
+            if (
+                /presentation|present|slide|ppt/
+                    .test(name)
+            ) {
+                return "presentation";
+            }
+
+
+            return "document";
+
+        }
+
+
+        function categoryLabel(
+            category
+        ) {
+
+            const labels = {
+
+                "floor-plan":
+                    "FLOOR PLAN",
+
+                "sketch":
+                    "SKETCH",
+
+                "rendered":
+                    "RENDERED PERSPECTIVE",
+
+                "presentation":
+                    "PRESENTATION",
+
+                "document":
+                    "DOCUMENT"
+
+            };
+
+
+            return (
+                labels[category] ||
+                "DOCUMENT"
+            );
+
+        }
+
+
+        /* =================================================
+           EXTENSION
+           ================================================= */
+
+        function extension(
+            name
+        ) {
+
+            const parts =
+                String(name)
+                    .split(".");
+
+
+            if (
+                parts.length < 2
+            ) {
+                return "FILE";
+            }
+
+
+            return parts
+                .pop()
+                .toUpperCase();
+
+        }
+
+
+        /* =================================================
+           IMAGE / PDF
+           ================================================= */
+
+        function isImage(
+            file
+        ) {
+
+            return (
+                String(file.type || "")
+                    .startsWith("image/")
+                ||
+                /\.(jpg|jpeg|png|webp|gif)$/i
+                    .test(file.name)
+            );
+
+        }
+
+
+        function isPDF(
+            file
+        ) {
+
+            return (
+                file.type ===
+                    "application/pdf"
+                ||
+                /\.pdf$/i
+                    .test(file.name)
+            );
+
+        }
+
+
+        /* =================================================
+           ESCAPE
+           ================================================= */
+
+        function escapeHTML(
+            value
+        ) {
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return "";
+            }
+
+
+            return String(value)
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
+        }
+
+
+        /* =================================================
+           RENDER
+           ================================================= */
+
+        function renderFiles() {
+
+            fileGrid.innerHTML =
+                "";
+
+
+            const filtered =
+                files.filter(
+                    function (file) {
+
+                        return (
+                            currentFilter ===
+                                "all"
+                            ||
+                            file.category ===
+                                currentFilter
+                        );
+
+                    }
+                );
+
+
+            fileCount.textContent =
+                files.length +
+                (
+                    files.length === 1
+                        ? " file"
+                        : " files"
+                );
+
+
+            if (
+                filtered.length === 0
+            ) {
+
+                emptyState.style.display =
+                    "block";
+
+            }
+            else {
+
+                emptyState.style.display =
+                    "none";
+
+            }
+
+
+            filtered.forEach(
+                function (file) {
+
+                    const card =
+                        document.createElement(
+                            "article"
+                        );
+
+
+                    card.className =
+                        "file-card";
+
+
+                    const preview =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    preview.className =
+                        "preview";
+
+
+                    if (
+                        isImage(file)
+                    ) {
+
+                        const image =
+                            document.createElement(
+                                "img"
+                            );
+
+
+                        image.src =
+                            URL.createObjectURL(
+                                file.file
+                            );
+
+
+                        image.alt =
+                            file.name;
+
+
+                        preview.appendChild(
+                            image
+                        );
+
+                    }
+                    else {
+
+                        const type =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        type.className =
+                            "file-type";
+
+
+                        type.textContent =
+                            extension(
+                                file.name
+                            );
+
+
+                        preview.appendChild(
+                            type
+                        );
+
+                    }
+
+
+                    preview.dataset.id =
+                        file.id;
+
+
+                    const body =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    body.className =
+                        "file-card-body";
+
+
+                    body.innerHTML = `
+
+                        <span class="file-category">
+                            ${categoryLabel(
+                                file.category
+                            )}
+                        </span>
+
+                        <h3 class="file-name">
+                            ${escapeHTML(
+                                file.name
+                            )}
+                        </h3>
+
+                        <div class="file-meta">
+                            ${formatSize(
+                                file.size
+                            )}
+                            ·
+                            ${escapeHTML(
+                                file.projectId
+                            )}
+                        </div>
+
+                        <div class="card-actions">
+
+                            <button
+                                type="button"
+                                data-action="view"
+                                data-id="${file.id}"
+                            >
+                                VIEW
+                            </button>
+
+                            <button
+                                type="button"
+                                data-action="download"
+                                data-id="${file.id}"
+                            >
+                                DOWNLOAD
+                            </button>
+
+                            <button
+                                type="button"
+                                data-action="delete"
+                                data-id="${file.id}"
+                            >
+                                DELETE
+                            </button>
+
+                        </div>
+
+                    `;
+
+
+                    card.appendChild(
+                        preview
+                    );
+
+                    card.appendChild(
+                        body
+                    );
+
+
+                    fileGrid.appendChild(
+                        card
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           LOAD FILES FOR CURRENT PROJECT
+           ================================================= */
+
+        async function loadFiles() {
+
+            if (!projectId) {
+
+                files = [];
+
+                renderFiles();
+
+                return;
 
             }
 
 
             try {
 
-                const fileData = {
+                const allFiles =
+                    await getAllFilesFromDatabase();
 
-                    name: file.name,
 
-                    type: file.type,
+                files =
+                    allFiles.filter(
+                        function (file) {
 
-                    size: file.size,
+                            return sameProject(
+                                file.projectId,
+                                projectId
+                            );
 
-                    category:
-                        getCategory(file),
-
-                    projectId:
-                        projectId,
-
-                    date:
-                        new Date().toISOString(),
-
-                    file:
-                        file
-
-                };
-
-
-                await addFileToDatabase(
-                    fileData
-                );
-
-
-                addedCount++;
-
-            }
-
-            catch (error) {
-
-                console.error(error);
-
-                alert(
-                    `Could not save ${file.name}.`
-                );
-
-            }
-
-        }
-
-
-        await loadFiles();
-
-
-        if (addedCount > 0) {
-
-            console.log(
-                `${addedCount} file(s) saved to IndexedDB.`
-            );
-
-        }
-
-
-        fileInput.value = "";
-
-    }
-);
-
-
-/* =========================================================
-   FILE CARD ACTIONS
-   ========================================================= */
-
-fileGrid.addEventListener(
-    "click",
-    event => {
-
-        const viewId =
-            event.target.dataset.view;
-
-        const deleteId =
-            event.target.dataset.delete;
-
-        const previewId =
-            event.target
-                .closest(".preview")
-                ?.dataset.id;
-
-
-        if (viewId) {
-
-            openViewer(
-                Number(viewId)
-            );
-
-        }
-
-        else if (previewId) {
-
-            openViewer(
-                Number(previewId)
-            );
-
-        }
-
-        else if (deleteId) {
-
-            deleteFile(
-                Number(deleteId)
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   DELETE FILE
-   ========================================================= */
-
-async function deleteFile(id) {
-
-    const file =
-        files.find(
-            item => item.id === id
-        );
-
-
-    if (!file) {
-        return;
-    }
-
-
-    if (
-        !confirm(
-            `Delete "${file.name}"?`
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await deleteFileFromDatabase(id);
-
-        await loadFiles();
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not delete the file."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   CLEAR PROJECT
-   ========================================================= */
-
-clearAll.addEventListener(
-    "click",
-    async () => {
-
-        const projectId =
-            projectIdInput.value.trim();
-
-
-        if (!files.length) {
-
-            alert(
-                "There are no saved project files."
-            );
-
-            return;
-
-        }
-
-
-        if (
-            !confirm(
-                `Delete all saved project files${
-                    projectId
-                        ? ` for ${projectId}`
-                        : ""
-                }?`
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        try {
-
-            await clearDatabase();
-
-            await loadFiles();
-
-        }
-
-        catch (error) {
-
-            console.error(error);
-
-            alert(
-                "Could not clear project files."
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   FILTERS
-   ========================================================= */
-
-document
-    .querySelectorAll(".filter")
-    .forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                document
-                    .querySelectorAll(".filter")
-                    .forEach(btn =>
-                        btn.classList.remove(
-                            "active"
-                        )
+                        }
                     );
 
 
-                button.classList.add(
-                    "active"
+                files.sort(
+                    function (a,b) {
+
+                        return (
+                            Number(b.id) -
+                            Number(a.id)
+                        );
+
+                    }
                 );
-
-
-                currentFilter =
-                    button.dataset.filter;
 
 
                 renderFiles();
 
             }
-        );
+            catch (error) {
 
-    });
+                console.error(
+                    "Could not load files:",
+                    error
+                );
 
+                alert(
+                    "Unable to load project files."
+                );
 
-/* =========================================================
-   OPEN VIEWER
-   ========================================================= */
+            }
 
-function openViewer(id) {
+        }
 
-    const filtered =
-        currentFilter === "all"
 
-            ? files
+        /* =================================================
+           FILE UPLOAD
+           ================================================= */
 
-            : files.filter(
-                file =>
-                    file.category ===
-                    currentFilter
-            );
+        fileInput.addEventListener(
+            "change",
+            async function () {
 
+                if (!projectId) {
 
-    const index =
-        filtered.findIndex(
-            file =>
-                file.id === id
-        );
+                    alert(
+                        "Please enter a Project ID first."
+                    );
 
+                    fileInput.value =
+                        "";
 
-    if (index === -1) {
-        return;
-    }
+                    return;
 
+                }
 
-    viewerIndex = index;
 
+                const selectedFiles =
+                    Array.from(
+                        fileInput.files
+                    );
 
-    viewer.classList.add(
-        "show"
-    );
 
+                if (
+                    selectedFiles.length === 0
+                ) {
+                    return;
+                }
 
-    viewer.setAttribute(
-        "aria-hidden",
-        "false"
-    );
 
+                const allowedExtensions =
+                    /\.(jpg|jpeg|png|webp|gif|pdf|ppt|pptx|doc|docx)$/i;
 
-    document.body.classList.add(
-        "viewer-open"
-    );
 
+                let added = 0;
 
-    showViewerFile(
-        filtered[viewerIndex]
-    );
 
-}
+                for (
+                    const file
+                    of selectedFiles
+                ) {
 
+                    if (
+                        !allowedExtensions
+                            .test(file.name)
+                    ) {
 
-/* =========================================================
-   SHOW VIEWER FILE
-   ========================================================= */
+                        alert(
+                            "Unsupported file:\n" +
+                            file.name
+                        );
 
-function showViewerFile(file) {
+                        continue;
 
-    viewerTitle.textContent =
-        file.name;
+                    }
 
 
-    viewerCategory.textContent =
-        categoryLabel(
-            file.category
-        );
+                    try {
 
+                        await addFileToDatabase({
 
-    viewerInfo.textContent =
-        `${formatSize(file.size)} · Project ${file.projectId}`;
+                            name:
+                                file.name,
 
+                            type:
+                                file.type,
 
-    const filtered =
-        currentFilter === "all"
+                            size:
+                                file.size,
 
-            ? files
+                            category:
+                                getCategory(file),
 
-            : files.filter(
-                item =>
-                    item.category ===
-                    currentFilter
-            );
+                            projectId:
+                                projectId,
 
+                            date:
+                                new Date()
+                                    .toISOString(),
 
-    viewerPosition.textContent =
-        `${viewerIndex + 1} / ${filtered.length}`;
+                            file:
+                                file
 
+                        });
 
-    viewerStage.innerHTML = "";
 
+                        added++;
 
-    if (isImage(file)) {
+                    }
+                    catch (error) {
 
-        const image =
-            document.createElement("img");
+                        console.error(
+                            error
+                        );
 
+                        alert(
+                            "Could not save:\n" +
+                            file.name
+                        );
 
-        image.src =
-            URL.createObjectURL(
-                file.file
-            );
+                    }
 
+                }
 
-        image.alt =
-            file.name;
 
+                fileInput.value =
+                    "";
 
-        viewerStage.appendChild(
-            image
-        );
 
-    }
+                await loadFiles();
 
 
-    else if (isPDF(file)) {
+                if (added > 0) {
 
-        const iframe =
-            document.createElement("iframe");
+                    alert(
+                        added +
+                        (
+                            added === 1
+                                ? " file"
+                                : " files"
+                        ) +
+                        " added to Project " +
+                        projectId +
+                        "."
+                    );
 
+                }
 
-        iframe.src =
-            URL.createObjectURL(
-                file.file
-            );
-
-
-        iframe.title =
-            file.name;
-
-
-        viewerStage.appendChild(
-            iframe
-        );
-
-    }
-
-
-    else {
-
-        viewerStage.innerHTML = `
-
-            <div class="unsupported">
-
-                <h2>
-                    ${extension(file.name)}
-                    FILE
-                </h2>
-
-                <p>
-                    This browser viewer does not
-                    render this file type directly.
-                </p>
-
-                <p>
-                    You can download the original
-                    presentation/document using
-                    the Download button.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-/* =========================================================
-   PREVIOUS / NEXT
-   ========================================================= */
-
-function navigate(direction) {
-
-    const filtered =
-        currentFilter === "all"
-
-            ? files
-
-            : files.filter(
-                file =>
-                    file.category ===
-                    currentFilter
-            );
-
-
-    if (!filtered.length) {
-        return;
-    }
-
-
-    viewerIndex =
-        (
-            viewerIndex +
-            direction +
-            filtered.length
-        ) %
-        filtered.length;
-
-
-    showViewerFile(
-        filtered[viewerIndex]
-    );
-
-}
-
-
-prevFile.addEventListener(
-    "click",
-    () => navigate(-1)
-);
-
-
-nextFile.addEventListener(
-    "click",
-    () => navigate(1)
-);
-
-
-/* =========================================================
-   CLOSE VIEWER
-   ========================================================= */
-
-closeViewer.addEventListener(
-    "click",
-    () => {
-
-        viewer.classList.remove(
-            "show"
+            }
         );
 
 
-        viewer.setAttribute(
-            "aria-hidden",
-            "true"
+        /* =================================================
+           CARD ACTIONS
+           ================================================= */
+
+        fileGrid.addEventListener(
+            "click",
+            async function (event) {
+
+                const actionButton =
+                    event.target.closest(
+                        "[data-action]"
+                    );
+
+
+                const preview =
+                    event.target.closest(
+                        ".preview"
+                    );
+
+
+                if (actionButton) {
+
+                    const id =
+                        Number(
+                            actionButton.dataset.id
+                        );
+
+
+                    const action =
+                        actionButton.dataset.action;
+
+
+                    if (
+                        action === "view"
+                    ) {
+
+                        openViewer(id);
+
+                    }
+
+
+                    if (
+                        action === "download"
+                    ) {
+
+                        downloadStoredFile(
+                            id
+                        );
+
+                    }
+
+
+                    if (
+                        action === "delete"
+                    ) {
+
+                        await deleteFile(
+                            id
+                        );
+
+                    }
+
+
+                    return;
+
+                }
+
+
+                if (preview) {
+
+                    openViewer(
+                        Number(
+                            preview.dataset.id
+                        )
+                    );
+
+                }
+
+            }
         );
 
 
-        document.body.classList.remove(
-            "viewer-open"
-        );
+        /* =================================================
+           DELETE
+           ================================================= */
 
-    }
-);
-
-
-/* =========================================================
-   KEYBOARD CONTROLS
-   ========================================================= */
-
-document.addEventListener(
-    "keydown",
-    event => {
-
-        if (
-            !viewer.classList.contains(
-                "show"
-            )
+        async function deleteFile(
+            id
         ) {
 
-            return;
+            const file =
+                files.find(
+                    function (item) {
 
-        }
+                        return (
+                            Number(item.id) ===
+                            Number(id)
+                        );
 
-
-        if (event.key === "Escape") {
-
-            closeViewer.click();
-
-        }
-
-
-        if (event.key === "ArrowLeft") {
-
-            navigate(-1);
-
-        }
-
-
-        if (event.key === "ArrowRight") {
-
-            navigate(1);
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   DOWNLOAD
-   ========================================================= */
-
-downloadFile.addEventListener(
-    "click",
-    () => {
-
-        const filtered =
-            currentFilter === "all"
-
-                ? files
-
-                : files.filter(
-                    file =>
-                        file.category ===
-                        currentFilter
+                    }
                 );
 
 
-        const file =
-            filtered[viewerIndex];
+            if (!file) {
+                return;
+            }
 
 
-        if (!file) {
-            return;
+            const confirmed =
+                confirm(
+                    "Delete " +
+                    file.name +
+                    "?"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            try {
+
+                await deleteFileFromDatabase(
+                    id
+                );
+
+
+                await loadFiles();
+
+            }
+            catch (error) {
+
+                console.error(
+                    error
+                );
+
+                alert(
+                    "Unable to delete the file."
+                );
+
+            }
+
         }
 
 
-        const url =
-            URL.createObjectURL(
-                file.file
+        /* =================================================
+           CLEAR PROJECT
+           ================================================= */
+
+        clearAllButton.addEventListener(
+            "click",
+            async function () {
+
+                if (!projectId) {
+
+                    alert(
+                        "No Project ID selected."
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    files.length === 0
+                ) {
+
+                    alert(
+                        "This project has no files."
+                    );
+
+                    return;
+
+                }
+
+
+                const confirmed =
+                    confirm(
+                        "Delete ALL files belonging to Project " +
+                        projectId +
+                        "?"
+                    );
+
+
+                if (!confirmed) {
+                    return;
+                }
+
+
+                try {
+
+                    await clearCurrentProject();
+
+                    await loadFiles();
+
+
+                    alert(
+                        "All files for Project " +
+                        projectId +
+                        " have been deleted."
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+                    alert(
+                        "Unable to clear this project's files."
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =================================================
+           FILTERS
+           ================================================= */
+
+        document
+            .querySelectorAll(
+                ".filter"
+            )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        "click",
+                        function () {
+
+                            document
+                                .querySelectorAll(
+                                    ".filter"
+                                )
+                                .forEach(
+                                    function (item) {
+
+                                        item.classList
+                                            .remove(
+                                                "active"
+                                            );
+
+                                    }
+                                );
+
+
+                            button.classList.add(
+                                "active"
+                            );
+
+
+                            currentFilter =
+                                button.dataset.filter;
+
+
+                            renderFiles();
+
+                        }
+                    );
+
+                }
             );
 
 
-        const link =
-            document.createElement("a");
+        /* =================================================
+           VIEWER
+           ================================================= */
+
+        function openViewer(
+            id
+        ) {
+
+            viewerFiles =
+                files.filter(
+                    function (file) {
+
+                        return (
+                            currentFilter ===
+                                "all"
+                            ||
+                            file.category ===
+                                currentFilter
+                        );
+
+                    }
+                );
 
 
-        link.href = url;
+            viewerIndex =
+                viewerFiles.findIndex(
+                    function (file) {
 
-        link.download =
-            file.name;
+                        return (
+                            Number(file.id) ===
+                            Number(id)
+                        );
+
+                    }
+                );
 
 
-        document.body.appendChild(
-            link
+            if (
+                viewerIndex < 0
+            ) {
+                return;
+            }
+
+
+            viewer.classList.add(
+                "show"
+            );
+
+
+            viewer.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+
+            document.body.classList.add(
+                "viewer-open"
+            );
+
+
+            showViewerFile();
+
+        }
+
+
+        function showViewerFile() {
+
+            const file =
+                viewerFiles[
+                    viewerIndex
+                ];
+
+
+            if (!file) {
+                return;
+            }
+
+
+            viewerTitle.textContent =
+                file.name;
+
+
+            viewerCategory.textContent =
+                categoryLabel(
+                    file.category
+                );
+
+
+            viewerInfo.textContent =
+                formatSize(file.size) +
+                " · Project " +
+                file.projectId;
+
+
+            viewerPosition.textContent =
+                (
+                    viewerIndex + 1
+                ) +
+                " / " +
+                viewerFiles.length;
+
+
+            viewerStage.innerHTML =
+                "";
+
+
+            if (
+                isImage(file)
+            ) {
+
+                const image =
+                    document.createElement(
+                        "img"
+                    );
+
+
+                image.src =
+                    URL.createObjectURL(
+                        file.file
+                    );
+
+
+                image.alt =
+                    file.name;
+
+
+                viewerStage.appendChild(
+                    image
+                );
+
+            }
+            else if (
+                isPDF(file)
+            ) {
+
+                const iframe =
+                    document.createElement(
+                        "iframe"
+                    );
+
+
+                iframe.src =
+                    URL.createObjectURL(
+                        file.file
+                    );
+
+
+                iframe.title =
+                    file.name;
+
+
+                viewerStage.appendChild(
+                    iframe
+                );
+
+            }
+            else {
+
+                const unsupported =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                unsupported.className =
+                    "unsupported";
+
+
+                unsupported.innerHTML = `
+
+                    <i class="fa-solid fa-file"></i>
+
+                    <h2>
+                        ${escapeHTML(
+                            extension(
+                                file.name
+                            )
+                        )} FILE
+                    </h2>
+
+                    <p>
+                        This file type cannot be
+                        previewed directly in the browser.
+                    </p>
+
+                    <button
+                        type="button"
+                        id="viewerDownloadFallback"
+                        style="
+                            margin-top:20px;
+                            padding:12px 18px;
+                            color:white;
+                            background:black;
+                            border:2px solid white;
+                            cursor:pointer;
+                        "
+                    >
+                        Download File
+                    </button>
+
+                `;
+
+
+                viewerStage.appendChild(
+                    unsupported
+                );
+
+
+                document
+                    .getElementById(
+                        "viewerDownloadFallback"
+                    )
+                    .addEventListener(
+                        "click",
+                        function () {
+
+                            downloadStoredFile(
+                                file.id
+                            );
+
+                        }
+                    );
+
+            }
+
+        }
+
+
+        /* =================================================
+           NAVIGATION
+           ================================================= */
+
+        function navigate(
+            direction
+        ) {
+
+            if (
+                viewerFiles.length === 0
+            ) {
+                return;
+            }
+
+
+            viewerIndex +=
+                direction;
+
+
+            if (
+                viewerIndex < 0
+            ) {
+
+                viewerIndex =
+                    viewerFiles.length - 1;
+
+            }
+
+
+            if (
+                viewerIndex >=
+                viewerFiles.length
+            ) {
+
+                viewerIndex = 0;
+
+            }
+
+
+            showViewerFile();
+
+        }
+
+
+        prevFile.addEventListener(
+            "click",
+            function () {
+                navigate(-1);
+            }
         );
 
 
-        link.click();
+        nextFile.addEventListener(
+            "click",
+            function () {
+                navigate(1);
+            }
+        );
 
 
-        link.remove();
+        /* =================================================
+           CLOSE VIEWER
+           ================================================= */
+
+        function closeViewerFunction() {
+
+            viewer.classList.remove(
+                "show"
+            );
 
 
-        setTimeout(() => {
+            viewer.setAttribute(
+                "aria-hidden",
+                "true"
+            );
 
-            URL.revokeObjectURL(url);
 
-        }, 1000);
+            document.body.classList.remove(
+                "viewer-open"
+            );
+
+
+            viewerStage.innerHTML =
+                "";
+
+        }
+
+
+        closeViewer.addEventListener(
+            "click",
+            closeViewerFunction
+        );
+
+
+        viewer.addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target ===
+                    viewer
+                ) {
+
+                    closeViewerFunction();
+
+                }
+
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    !viewer.classList.contains(
+                        "show"
+                    )
+                ) {
+                    return;
+                }
+
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    closeViewerFunction();
+
+                }
+
+
+                if (
+                    event.key ===
+                    "ArrowLeft"
+                ) {
+
+                    navigate(-1);
+
+                }
+
+
+                if (
+                    event.key ===
+                    "ArrowRight"
+                ) {
+
+                    navigate(1);
+
+                }
+
+            }
+        );
+
+
+        /* =================================================
+           DOWNLOAD
+           ================================================= */
+
+        async function downloadStoredFile(
+            id
+        ) {
+
+            let file =
+                files.find(
+                    function (item) {
+
+                        return (
+                            Number(item.id) ===
+                            Number(id)
+                        );
+
+                    }
+                );
+
+
+            if (!file) {
+
+                const allFiles =
+                    await getAllFilesFromDatabase();
+
+
+                file =
+                    allFiles.find(
+                        function (item) {
+
+                            return (
+                                Number(item.id) ===
+                                Number(id)
+                            );
+
+                        }
+                    );
+
+            }
+
+
+            if (!file) {
+
+                alert(
+                    "File not found."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                const blob =
+                    file.file instanceof Blob
+                        ? file.file
+                        : new Blob(
+                            [file.file],
+                            {
+                                type:
+                                    file.type ||
+                                    "application/octet-stream"
+                            }
+                        );
+
+
+                const url =
+                    URL.createObjectURL(
+                        blob
+                    );
+
+
+                const anchor =
+                    document.createElement(
+                        "a"
+                    );
+
+
+                anchor.href =
+                    url;
+
+                anchor.download =
+                    file.name;
+
+
+                document.body.appendChild(
+                    anchor
+                );
+
+
+                anchor.click();
+
+
+                anchor.remove();
+
+
+                setTimeout(
+                    function () {
+
+                        URL.revokeObjectURL(
+                            url
+                        );
+
+                    },
+                    1000
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    error
+                );
+
+                alert(
+                    "Unable to download this file."
+                );
+
+            }
+
+        }
+
+
+        downloadFile.addEventListener(
+            "click",
+            function () {
+
+                const file =
+                    viewerFiles[
+                        viewerIndex
+                    ];
+
+
+                if (file) {
+
+                    downloadStoredFile(
+                        file.id
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =================================================
+           BACK TO PORTAL
+           ================================================= */
+
+        window.goToProjectPortal =
+            function () {
+
+                localStorage.setItem(
+                    "architecturalProjectId",
+                    projectId
+                );
+
+
+                window.location.href =
+                    "project-portal.html?projectId=" +
+                    encodeURIComponent(
+                        projectId
+                    );
+
+            };
+
+
+        /* =================================================
+           INITIALIZE
+           ================================================= */
+
+        async function initialize() {
+
+            try {
+
+                await openDatabase();
+
+                await loadFiles();
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Database error:",
+                    error
+                );
+
+                alert(
+                    "Unable to initialize the Project File Library."
+                );
+
+            }
+
+        }
+
+
+        initialize();
 
     }
 );
-
-
-/* =========================================================
-   BACK TO PROJECT RECEIPT
-   ========================================================= */
-
-function goToProjectReceipt() {
-
-    window.location.href =
-        "index.html";
-
-}
-
-
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
-
-async function initialize() {
-
-    try {
-
-        await openDatabase();
-
-        await loadFiles();
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        alert(
-            "Your browser could not open IndexedDB."
-        );
-
-    }
-
-}
-
-
-initialize();
