@@ -5,22 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Architectural Receipt Calculator</title>
+    <title>ARCHGEN - Architectural Receipt Calculator</title>
 
     <link rel="stylesheet" href="style.css">
+
     <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
->
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
 </head>
 
 <body>
 
 <div class="receipt-container">
 
-    <!-- ==========================================
+    <!-- =====================================================
          HEADER
-         ========================================== -->
+         ===================================================== -->
 
     <div class="header">
 
@@ -47,9 +48,9 @@
     </div>
 
 
-    <!-- ==========================================
+    <!-- =====================================================
          PROJECT INFORMATION
-         ========================================== -->
+         ===================================================== -->
 
     <div class="project-info">
 
@@ -136,7 +137,7 @@
             <input
                 type="text"
                 id="projectId"
-                placeholder="Project ID"
+                placeholder="PRJ-001"
             >
 
         </div>
@@ -144,9 +145,27 @@
     </div>
 
 
-    <!-- ==========================================
+    <!-- =====================================================
+         PROJECT PORTAL BUTTON
+         ===================================================== -->
+
+    <div class="project-portal-action">
+
+        <button
+            type="button"
+            class="btn portal-btn"
+            id="openProjectPortal"
+        >
+            <i class="fa-solid fa-building"></i>
+            Project Portal
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
          SERVICES
-         ========================================== -->
+         ===================================================== -->
 
     <h2>
         Architectural Services / Materials
@@ -176,8 +195,6 @@
 
         <tbody id="receiptBody">
 
-            <!-- DEFAULT ITEM -->
-
             <tr>
 
                 <td>
@@ -197,7 +214,8 @@
                         type="number"
                         class="qty"
                         value="1"
-                        min="1"
+                        min="0"
+                        step="1"
                     >
 
                 </td>
@@ -227,7 +245,7 @@
                         type="button"
                         class="btn remove-btn"
                     >
-                        X
+                        Remove
                     </button>
 
                 </td>
@@ -239,9 +257,9 @@
     </table>
 
 
-    <!-- ==========================================
+    <!-- =====================================================
          ADD ITEM
-         ========================================== -->
+         ===================================================== -->
 
     <button
         type="button"
@@ -252,14 +270,11 @@
     </button>
 
 
-    <!-- ==========================================
+    <!-- =====================================================
          SUMMARY
-         ========================================== -->
+         ===================================================== -->
 
     <div class="summary">
-
-
-        <!-- SUBTOTAL -->
 
         <div class="summary-row">
 
@@ -273,8 +288,6 @@
 
         </div>
 
-
-        <!-- DISCOUNT -->
 
         <div class="summary-row">
 
@@ -294,8 +307,6 @@
         </div>
 
 
-        <!-- DISCOUNT AMOUNT -->
-
         <div class="summary-row">
 
             <span>
@@ -308,8 +319,6 @@
 
         </div>
 
-
-        <!-- VAT -->
 
         <div class="summary-row">
 
@@ -329,8 +338,6 @@
         </div>
 
 
-        <!-- VAT AMOUNT -->
-
         <div class="summary-row">
 
             <span>
@@ -343,8 +350,6 @@
 
         </div>
 
-
-        <!-- GRAND TOTAL -->
 
         <div class="summary-row grand-total">
 
@@ -361,31 +366,62 @@
     </div>
 
 
-    <!-- ==========================================
+    <!-- =====================================================
          BUTTONS
-         ========================================== -->
+         ===================================================== -->
 
-   <div class="button-container">
-    <button type="button" class="btn calculate-btn" id="calculate">
-        Calculate
-    </button>
+    <div class="button-container">
 
-    <button type="button" class="btn save-btn" id="saveReceipt">
-        Save Receipt
-    </button>
+        <button
+            type="button"
+            class="btn calculate-btn"
+            id="calculate"
+        >
+            Calculate
+        </button>
 
-    <button type="button" class="btn print-btn" id="printReceipt">
-        Print Receipt
-    </button>
-</div>
-<a href="project-files.html" class="btn files-btn">
-    <i class="fa-solid fa-folder-open"></i>
-    Project Files
-</a>
 
-    <!-- ==========================================
+        <button
+            type="button"
+            class="btn save-btn"
+            id="saveReceipt"
+        >
+            Save Receipt
+        </button>
+
+
+        <button
+            type="button"
+            class="btn print-btn"
+            id="printReceipt"
+        >
+            Print Receipt
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         PROJECT FILES
+         ===================================================== -->
+
+    <div class="files-action">
+
+        <button
+            type="button"
+            class="btn files-btn"
+            id="openProjectFiles"
+        >
+            <i class="fa-solid fa-folder-open"></i>
+            Project Files
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
          FOOTER
-         ========================================== -->
+         ===================================================== -->
 
     <div class="footer">
 
@@ -400,18 +436,28 @@
     </div>
 
 </div>
-<!-- ==========================================
+
+
+<!-- =========================================================
      RECEIPT RECORDS
-     ========================================== -->
+     ========================================================= -->
 
 <div class="records-section">
 
     <div class="records-header">
 
         <div>
-            <h2>Receipt Records</h2>
-            <p>Saved architectural billing statements</p>
+
+            <h2>
+                Receipt Records
+            </h2>
+
+            <p>
+                Saved architectural billing statements
+            </p>
+
         </div>
+
 
         <button
             type="button"
@@ -429,18 +475,24 @@
         <table id="recordsTable">
 
             <thead>
+
                 <tr>
+
                     <th>Receipt No.</th>
                     <th>Date</th>
                     <th>Client</th>
                     <th>Project</th>
+                    <th>Project ID</th>
                     <th>Subtotal</th>
                     <th>Discount</th>
                     <th>VAT</th>
                     <th>Total</th>
                     <th>Action</th>
+
                 </tr>
+
             </thead>
+
 
             <tbody id="recordsBody"></tbody>
 
@@ -458,10 +510,6 @@
 
 </div>
 
-
-<!-- ==========================================
-     JAVASCRIPT
-     ========================================== -->
 
 <script src="script.js"></script>
 
