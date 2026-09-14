@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ARCHGEN Project Portal</title>
+
+    <link
+        rel="stylesheet"
+        href="project-portal.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+</head>
+
+<body>
+
+<div class="portal-app">
+
+    <!-- =====================================================
+         TOP NAVIGATION
+         ===================================================== -->
+
+    <header class="portal-header">
+
+        <div class="portal-brand">
+
+            <div class="brand-mark">
+                ARCHGEN
+            </div>
+
+            <div>
+
+                <div class="eyebrow">
+                    ARCHITECTURAL PROJECT MANAGEMENT SYSTEM
+                </div>
+
+                <h1>
+                    PROJECT PORTAL
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <button
+                id="backReceipt"
+                class="architectural-btn white-btn"
+                type="button"
+            >
+                <i class="fa-solid fa-receipt"></i>
+                Receipt
+            </button>
+
+            <button
+                id="projectFiles"
+                class="architectural-btn"
+                type="button"
+            >
+                <i class="fa-solid fa-folder-open"></i>
+                Project Files
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         PROJECT IDENTIFICATION
+         ===================================================== -->
+
+    <section class="project-identification">
+
+        <div>
+
+            <span>
+                PROJECT ID
+            </span>
+
+            <strong id="portalProjectId">
+                —
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                PROJECT NAME
+            </span>
+
+            <strong id="portalProjectName">
+                —
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                CLIENT
+            </span>
+
+            <strong id="portalClient">
+                —
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                LOCATION
+            </span>
+
+            <strong id="portalLocation">
+                —
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         DASHBOARD CARDS
+         ===================================================== -->
+
+    <section class="dashboard-grid">
+
+        <article class="dashboard-card">
+
+            <div class="card-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    PROJECT PROGRESS
+                </span>
+
+                <strong id="projectProgress">
+                    0%
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <div class="card-icon">
+                <i class="fa-solid fa-peso-sign"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    PROJECT BILLING
+                </span>
+
+                <strong id="projectBilling">
+                    ₱0.00
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <div class="card-icon">
+                <i class="fa-solid fa-file-lines"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    RECEIPTS
+                </span>
+
+                <strong id="receiptCount">
+                    0
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <div class="card-icon">
+                <i class="fa-solid fa-paperclip"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    PROJECT FILES
+                </span>
+
+                <strong id="fileCount">
+                    0
+                </strong>
+
+            </div>
+
+        </article>
+
+    </section>
+
+
+    <!-- =====================================================
+         MAIN GRID
+         ===================================================== -->
+
+    <main class="main-grid">
+
+
+        <!-- =================================================
+             PROJECT INFORMATION
+             ================================================= -->
+
+        <section class="architectural-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span>
+                        PROJECT DOCUMENTATION
+                    </span>
+
+                    <h2>
+                        Project Information
+                    </h2>
+
+                </div>
+
+                <i class="fa-solid fa-compass-drafting"></i>
+
+            </div>
+
+
+            <div class="information-grid">
+
+                <div>
+                    <label>Project ID</label>
+                    <p id="infoProjectId">—</p>
+                </div>
+
+                <div>
+                    <label>Project Name</label>
+                    <p id="infoProjectName">—</p>
+                </div>
+
+                <div>
+                    <label>Client</label>
+                    <p id="infoClient">—</p>
+                </div>
+
+                <div>
+                    <label>Location</label>
+                    <p id="infoLocation">—</p>
+                </div>
+
+                <div>
+                    <label>Project Start</label>
+                    <p id="infoStartDate">—</p>
+                </div>
+
+                <div>
+                    <label>Estimated Completion</label>
+                    <p id="infoCompletion">—</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             STATUS
+             ================================================= -->
+
+        <section class="architectural-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span>
+                        PROJECT DEVELOPMENT
+                    </span>
+
+                    <h2>
+                        Current Status
+                    </h2>
+
+                </div>
+
+                <i class="fa-solid fa-layer-group"></i>
+
+            </div>
+
+
+            <div class="status-control">
+
+                <label for="statusSelect">
+                    Project Phase
+                </label>
+
+                <select id="statusSelect">
+
+                    <option value="Planning">
+                        Planning
+                    </option>
+
+                    <option value="Concept Design">
+                        Concept Design
+                    </option>
+
+                    <option value="Design Development">
+                        Design Development
+                    </option>
+
+                    <option value="Construction Documents">
+                        Construction Documents
+                    </option>
+
+                    <option value="Construction">
+                        Construction
+                    </option>
+
+                    <option value="Completed">
+                        Completed
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="progress-area">
+
+                <div class="progress-label">
+
+                    <span>
+                        Completion
+                    </span>
+
+                    <strong id="progressText">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <input
+                    type="range"
+                    id="progressRange"
+                    min="0"
+                    max="100"
+                    value="0"
+                >
+
+
+                <div class="progress-track">
+
+                    <div
+                        id="progressBar"
+                        class="progress-bar"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <button
+                id="saveProjectStatus"
+                type="button"
+                class="architectural-btn full-btn"
+            >
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save Project Status
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+             ================================================= -->
+
+        <section class="architectural-panel full-width">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span>
+                        PROJECT OPERATIONS
+                    </span>
+
+                    <h2>
+                        Architectural Workspace
+                    </h2>
+
+                </div>
+
+                <i class="fa-solid fa-drafting-compass"></i>
+
+            </div>
+
+
+            <div class="workspace-grid">
+
+                <button
+                    type="button"
+                    class="workspace-card"
+                    id="openFilesCard"
+                >
+
+                    <i class="fa-solid fa-folder-tree"></i>
+
+                    <strong>
+                        Project File Library
+                    </strong>
+
+                    <span>
+                        Floor plans, sketches, renders and documents
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="workspace-card"
+                    id="newReceiptCard"
+                >
+
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                    <strong>
+                        New Billing Statement
+                    </strong>
+
+                    <span>
+                        Create an architectural service receipt
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="workspace-card"
+                    id="viewReceiptsCard"
+                >
+
+                    <i class="fa-solid fa-receipt"></i>
+
+                    <strong>
+                        Project Billing
+                    </strong>
+
+                    <span>
+                        View receipts associated with this project
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="workspace-card"
+                    id="printSummaryCard"
+                >
+
+                    <i class="fa-solid fa-print"></i>
+
+                    <strong>
+                        Project Summary
+                    </strong>
+
+                    <span>
+                        Print this project's architectural summary
+                    </span>
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RECEIPT RECORDS
+             ================================================= -->
+
+        <section class="architectural-panel full-width">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span>
+                        FINANCIAL DOCUMENTATION
+                    </span>
+
+                    <h2>
+                        Project Receipts
+                    </h2>
+
+                </div>
+
+                <span id="billingSummary">
+                    ₱0.00
+                </span>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Receipt
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Client
+                            </th>
+
+                            <th>
+                                Total
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="portalReceiptsBody"></tbody>
+
+                </table>
+
+            </div>
+
+
+            <div
+                id="noProjectReceipts"
+                class="empty-panel"
+            >
+                No receipts are associated with this Project ID.
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PROJECT TIMELINE
+             ================================================= -->
+
+        <section class="architectural-panel full-width">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span>
+                        ARCHITECTURAL WORKFLOW
+                    </span>
+
+                    <h2>
+                        Project Timeline
+                    </h2>
+
+                </div>
+
+                <i class="fa-solid fa-timeline"></i>
+
+            </div>
+
+
+            <div class="timeline">
+
+                <div class="timeline-item active">
+                    <span>01</span>
+                    <div>
+                        <strong>Project Initialization</strong>
+                        <p>Project information and requirements.</p>
+                    </div>
+                </div>
+
+
+                <div class="timeline-item">
+                    <span>02</span>
+                    <div>
+                        <strong>Concept Development</strong>
+                        <p>Initial architectural concepts and studies.</p>
+                    </div>
+                </div>
+
+
+                <div class="timeline-item">
+                    <span>03</span>
+                    <div>
+                        <strong>Design Development</strong>
+                        <p>Detailed plans, materials and presentations.</p>
+                    </div>
+                </div>
+
+
+                <div class="timeline-item">
+                    <span>04</span>
+                    <div>
+                        <strong>Construction Documentation</strong>
+                        <p>Technical drawings and project documentation.</p>
+                    </div>
+                </div>
+
+
+                <div class="timeline-item">
+                    <span>05</span>
+                    <div>
+                        <strong>Construction</strong>
+                        <p>Construction monitoring and progress.</p>
+                    </div>
+                </div>
+
+
+                <div class="timeline-item">
+                    <span>06</span>
+                    <div>
+                        <strong>Project Completion</strong>
+                        <p>Final documentation and turnover.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer class="portal-footer">
+
+        <strong>
+            ARCHGEN DESIGN + CONSTRUCTION
+        </strong>
+
+        <span>
+            ARCHITECTURAL PROJECT MANAGEMENT
+        </span>
+
+    </footer>
+
+</div>
+
+
+<script src="project-portal.js"></script>
+
+</body>
+
+</html>
